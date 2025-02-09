@@ -1,0 +1,245 @@
+---
+title: "Data 311 ass 2"
+author: "Ricky Doucette 74940750"
+date: "2022-10-05"
+output: html_document
+---s
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+
+
+```
+
+
+## 1.
+
+
+```{r results = "hide"}
+red <- read.csv("winequality-red.csv")
+white <-read.csv("winequality-white.csv")
+
+```
+
+
+### a/b)
+
+
+```{r}
+hist(red$quality, main = "Red", xlab = "quality")
+hist(white$quality, main = "White", xlab = "quality")
+wine <- rbind(red, white)
+kind <- as.factor(c(rep("red", nrow(red)), rep("white", nrow(white))))
+wine <- cbind(wine, kind)
+```
+
+
+### c)
+
+```{r}
+st_num = (74940750 + 2022)
+set.seed(st_num)                                                        
+N =6497
+n = 4548
+m = N-n   
+
+
+tr_ind <- sample(N, n) #n amount of random numbers from values 1 to N
+te_ind <- setdiff(seq_len(N), tr_ind) #elements in N that aren't in tr_ind
+
+
+
+tr_set <- wine[tr_ind,]  #tr_set takes all rows of values in tr_ind and all columns of associated rows
+tr_x = tr_set[ , c(1:11,13) ] #all rows from first 11 columns from tr_set become x values (predictors)
+tr_y = tr_set[ , 12 ] #12th column from tr_set becomes y value (response)
+
+
+te_set <- wine[te_ind,]  
+te_x = te_set[ , c(1:11,13) ]
+te_y = te_set[ , 12 ] 
+```
+
+
+### d)
+
+
+```{r}
+fit <- lm(wine$quality ~wine$fixedacidity +wine$volatileacidity +wine$citricacid +wine$residualsugar +wine$chlorides +wine$freesulfurdioxide +wine$totalsulfurdioxide +wine$density +wine$pH +wine$sulphates +wine$alcohol +wine$kind, data =wine)
+summary(fit)
+
+```
+Going off alpha being 0.05, our p value from the F-test is 2.2x10^-16 which is significantly less than 0.05. Therefore there is at least one predictor that is significant for predicting quality
+
+
+
+### e)
+
+
+```{r}
+fit1 <-lm(quality ~ alcohol, data = wine, tr_ind)
+summary(fit1)
+
+
+
+```
+From reading the summary, about 19.5% of the variation in quality is explained by alcohol
+
+
+### f)
+
+
+```{r}
+tr_Alc_x <- tr_set[,11 ]
+plot(tr_Alc_x, tr_y, main = "Alcohol vs Quality",xlab ="Alcohol",xlim = c(0,15), ylab = "Quality", ylim=c(2,10))
+abline(fit1)
+```
+
+
+### g)  
+Intercept estimate = 2.4, estimated slope = 0.325. Therefore the fitted regression line in the format of y(hat) = B0(hat) + B1(hat)x is y(hat) = 2.4 + 0.325x
+
+quality = 2.4 + 0.325(alcohol)
+
+### h)  
+For every increase of one unit of alcohol, quality increases by 0.325 units
+
+### i)  
+I would argue that the intercept does have practical meaning here. At alchol = 0, quality = 2.4. I would interpret this as if we have no alcohol in the wine, the quality is 2.4 out of 10.
+
+### j)  
+H0: Changing the alcohol value (alcohol percentage of the wine) has no effect on the average quality of the wine, B1(slope) =0. HA: Changing the alcohol value has an effect on the average quality of the wine, B1 /= 0. p-value = 2x10^-16 , T-value = 33.19, therfore since p-value < 0.05, there is evidence against the null hypothesis and in favour that changing the value of the alcohol effects the average quality of the wine
+
+### k)  
+```{r}
+
+te_y_hat <- predict(fit1, newdata = te_set)
+#the average quality we will get from test set using the linear model from fit1 is:
+mean(te_y_hat)
+MSEte <- mean((te_y-te_y_hat)^2)
+MSEte
+```
+
+
+## 2.  
+
+### a)  
+
+```{r}
+
+fit2 <- lm(quality ~ alcohol + factor(kind), data = wine)
+summary(fit2)
+##not asking for it to be strictly on the training set, just to create this new model so I have not incorporated a subset
+
+```
+With the small p-value for the kind of wine after controlling for alcohol, there's strong evidence to suggest a difference in average quality based on the kind of wine
+
+### b)  
+
+The reference level for this model is when kind is "red". So the baseline for the kind of wine is red.
+
+
+### c)  
+
+The fitted line for red wines is 
+quality = 2.272 + 0.323(alcohol)
+
+
+### d)  
+
+```{r}
+summary(lm(quality ~ alcohol + factor(kind), data = wine, tr_ind))
+
+```
+The fitted line for red wines on the training data is quality = 2.272 + 0.323(alcohol)
+Unless you are looking at the intercepts and slopes to the 4th decimal place, the fitted line for red wines for the training data is the exact same as the fit above. The fit does not differ
+
+### e)  
+The fitted line for white wines is
+quality = 2.272 + 0.323(alcohol) + 0.212
+        = 2.484 + 0.323(alcohol)
+        
+### f)  
+
+```{r}
+library(ggplot2)
+plot(wine$alcohol, wine$quality, xlab = "Alcohol", xlim =c(0, 15.5), ylab = "Quality", ylim= c(2,10))
+
+abline(a = 2.272, b= 0.323, col = "red")
+abline(a = 2.484, b= 0.323, col = "blue")
+
+legend(0,10, legend= c("Red", "White"), col = c("red", "blue"), lty =1, cex =0.8)
+```
+
+### g)  
+
+```{r}
+fit3 <- lm(quality ~ alcohol*factor(kind), data = wine)
+summary(fit3)
+
+```
+The interaction has a p-value of 0.0193 which is less than 0.05, the significance level, s there is evidence of an interaction effect of alcohol with the kind of wine on quality. 
+So yes it is worth it to include the interaction term
+
+### h)  
+
+```{r}
+##quality = 1.875 + 0.361(alcohol) + 0.707(white) - 0.047(alcohol)(white)
+
+##red: quality = 1.875 + 0.361(alcohol)
+##white: quality = 2.582 + 0.313(alcohol)
+
+plot(wine$alcohol, wine$quality, xlab = "Alcohol", xlim =c(0, 15.5), ylab = "Quality", ylim= c(1.75,10))
+
+abline(a = 1.875, b= 0.361, col = "red") 
+abline(a = 2.582, b= 0.313, col = "blue")
+
+legend(0,10, legend= c("Red", "White"), col = c("red", "blue"), lty =1, cex =0.8)
+```
+
+### i)  
+```{r}
+fullmod <- lm(quality ~ fixedacidity + volatileacidity+citricacid + residualsugar+chlorides + freesulfurdioxide+totalsulfurdioxide +density + pH+ sulphates+ sulphates+ alcohol+ factor(kind), data = wine)
+
+summary(fullmod)
+```
+
+### j)  
+
+```{r}
+#code written before properly understanding what questions asked for. Not important.
+##predictors <- wine[0,c(1:11, 13)]
+##predictors
+##pvalues <- c(7.05*10^-8, 2*10^-16, 0.4322, 2*10^-16, 0.0236, 1.25*10^-10,1.49*10^-5, 4.71*10^-13, 3.81*10^-8, 2*10^-16, 2*10^-16, 2.06*10^-10)
+##ind<-0
+##while(max(pvalues) > 0.05){
+##ind <- match(max(pvalues), pvalues)
+##pvalues[ind] <- -1;
+
+##}
+##predictors
+##pvalues
+##for(i in 1:length(pvalues)){
+##if(pvalues[i] !=-1){
+##print(predictors[i])
+##}
+##}
+
+
+fitback <- (lm(quality ~ fixedacidity + volatileacidity+ residualsugar+chlorides + freesulfurdioxide+totalsulfurdioxide +density + pH+ sulphates+ sulphates+ alcohol+ factor(kind), data = wine))
+
+summary(fitback)
+
+
+###so starting with all predictors, if any have a p-value greater than 0.05, choose the predictor with the largest p-value and remove it from our variables. Continue until all p-values < 0.05
+
+#To start, there was a p-value >0.05, so we picked the largest p-value which was 0.4322 from citric acid and removed it from our variables. Then when we check all the p-values again, we see that none are > 0.05 and we keep all the rest
+
+
+
+
+```
+
+### k)  
+
+When keeping all other variables constant, an increase in one unit of alcohol will increase the quality of the wine by 0.221 units
+
