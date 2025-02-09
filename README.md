@@ -1,6 +1,8 @@
 # Red-White-WineQuality
-### Testing variables to determine significant predicators for predicting red/white wine quality.
-#### Out of all predictors considered, alcohol percentage shows to be the most significant in predicting both red and white wine quality
+## Testing variables to determine significant predicators for predicting red/white wine quality.
+### Out of all predictors considered, alcohol percentage shows to be the most significant in predicting both red and white wine quality
+
+
 
 Citation Request:
   This dataset is public available for research. The details are described in [Cortez et al., 2009]. 
